@@ -2,6 +2,12 @@
 
 This is the tech spec for the Photo Asset Management cross-service example. This doc details the specifics of the deliverable app.
 
+## Suggested Overview
+
+_Suggested overview for the per-language READMEs._
+
+The Photo Asset Management (PAM) example app uses Amazon Rekognition to categorize images, which are stored with Amazon S3 Intelligent-Tiering for cost savings. Users can upload new images. Those images are analyzed with label detection and the labels are stored in an Amazon DynamoDB table. Users can later request a bundle of images matching those labels. When images are requested, they will be retrieved from Amazon S3, zipped, and the user is sent a link to the zip.
+
 ## Table of contents
 
 - Development / Deployment - Information on where to find AWS Cloud Development Kit (AWS CDK) deployment and development instructions.
@@ -80,11 +86,11 @@ A GET request is made to `/labels`. The labels are displayed to the user who can
 
 API Gateway provides HTTP API routes for the Lambda integrations `LabelsFn`, `UploadFn`, and `PrepareDownloadFn`. Each endpoint is configured with a an Amazon Cognito authorizer. Parameters for all routes are provided in the body of the request in a JSON object. Each parameter is a top-level item in the request body JSON object.
 
-| Method | Route     | Parameters        | Example response                                            | Lambda            |
-| ------ | --------- | ----------------- | ----------------------------------------------------------- | ----------------- |
-| PUT    | /upload   | file_name: string | {"url": "presigned URL"}                                    | UploadFn          |
-| GET    | /labels   |                   | {"labels": {"maintain": {"count": 5}, "lake": {"count": 3}} | LabelsFn          |
-| POST   | /download | labels: string[]  | {} (event)                                                  | PrepareDownloadFn |
+| Method | Route     | Parameters        | Example response                                             | Lambda            |
+| ------ | --------- | ----------------- | ------------------------------------------------------------ | ----------------- |
+| PUT    | /upload   | file_name: string | {"url": "presigned URL"}                                     | UploadFn          |
+| GET    | /labels   |                   | {"labels": {"maintain": {"count": 5}, "lake": {"count": 3}}} | LabelsFn          |
+| POST   | /download | labels: string[]  | {} (event)                                                   | PrepareDownloadFn |
 
 ### ⭐ Amazon Cognito
 
@@ -161,6 +167,8 @@ This Lambda will be triggered by uploads to the Storage Bucket.
 4. Send an SNS message including this presigned URL.
 
 SNS topics are created using the AWS CDK. The `PrepareDownloadFn` Lambda publishes messages by calling the Amazon SNS service client’s publish().
+
+WARNING: Presigned URLs are often longer than email client limits, and email clients may insert newlines or spaces for formatting that breaks the URL. This is a known limitation of using SNS, and the Code Examples team are looking for alternatives. However, SNS does not send rich html, and the design goals do not allow for PAM to handle PII directly.
 
 # README
 
